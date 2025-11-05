@@ -1,0 +1,62 @@
+
+services:
+  superlink:
+    build: ./superlink
+    command: --insecure --fleet-api-type rest
+    ports:
+      - "9091:9091"
+      - "9092:9092"
+      - "9093:9093"
+
+  supernode1:
+    build: ./supernode
+    command: >
+      --insecure
+      --superlink http://proxy:8080
+      --node-config "partition-id=0 num-partitions=2"
+      --clientappio-api-address 0.0.0.0:9094
+      --isolation process
+      --rest
+    depends_on:
+      - superlink
+
+  supernode2:
+    build: ./supernode
+    command: >
+      --insecure 
+      --superlink http://proxy:8080
+      --node-config "partition-id=0 num-partitions=2"
+      --clientappio-api-address 0.0.0.0:9095
+      --isolation process
+      --rest
+    depends_on:
+      - superlink
+
+  superexec-central:
+    build: docker-test
+    command: >
+      --insecure
+      --plugin-type serverapp
+      --appio-api-address http://superlink:9091
+
+  superexec-client1:
+    build: docker-test
+    command: >
+      --insecure
+      --plugin-type clientapp
+      --appio-api-address supernode1:9094
+      
+  superexec-client2:
+    build: docker-test
+    command: >
+      --insecure
+      --plugin-type clientapp
+      --appio-api-address supernode2:9095
+
+  proxy:
+    build: ./proxy
+    environment:
+      - "FLASK_SUPERLINK=http://superlink:9095"
+      - "FLASK_DEBUG=True"
+    depends_on:
+      - superlink
