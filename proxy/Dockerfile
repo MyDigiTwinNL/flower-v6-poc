@@ -1,5 +1,7 @@
 FROM python:3.12
 
+ENV PYTHONUNBUFFERED=True
+
 RUN mkdir /app
 
 COPY . /app

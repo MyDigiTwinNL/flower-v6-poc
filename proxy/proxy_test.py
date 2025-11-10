@@ -5,6 +5,8 @@ import requests
 from argparse import ArgumentParser
 import logging
 
+logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -32,8 +34,8 @@ def proxy_flower_messages(endpoint):
         'Accept': 'application/protobuf'
     }
 
-    print(f"[INTERCEPT] Endpoint: {endpoint}")
-    print(f"[INTERCEPT] Data size: {len(protobuf_data)} bytes")
+    logging.info(f"[INTERCEPT] Endpoint: {endpoint}")
+    logging.info(f"[INTERCEPT] Data size: {len(protobuf_data)} bytes")
 
     # 2. Forward to Flower server
     flower_response = requests.post(
