@@ -1,74 +1,22 @@
-
 # flower-poc
-
 Proof of concept for training flower federated learning models in vantage6
 
-This algorithm is designed to be run with the [vantage6](https://vantage6.ai)
-infrastructure for distributed analysis and learning.
+## v6/flower proxy
+One option for integrating flower with vantage6 is to create 2 proxies: one for the central node (superlink) and one for
+the client nodes. The nodes would have to talk to eachother as follows.
 
-The base code for this algorithm has been created via the
-[v6-algorithm-template](https://github.com/vantage6/v6-algorithm-template)
-template generator.
+Flow:
+1. Central v6 node starts up central v6 algorithm including flower superlink, flower central proxy, and superexec central.
+2. Algorithm sends request to run partial v6 algorithm on a different node including supernode, client proxy and superexec client.
+3. Supernode starts up and  will try to reach out to superlink.
+4. Instead of superlink it will find client proxy acting as superlink.
+5. Response from client proxy should whatever makes that supernode happy.
+6. Superexec will start, which means the federated model at the clients will be trained.
+7. After one iteration, the weights will be sent as output of the v6 algorithm and client nodes will shut down.
+8. Central node with central superexec will receive the weights and aggregate them.
+9. Go back to step 2 until training is done.
 
-### Checklist
 
-Note that the template generator does not create a completely ready-to-use
-algorithm yet. There are still a number of things you have to do yourself.
-Please ensure to execute the following steps. The steps are also indicated with
-TODO statements in the generated code - so you can also simply search the
-code for TODO instead of following the checklist below.
-
-- [ ] Include a URL to your code repository in setup.py.
-- [ ] Implement your algorithm functions.
-  - [ ] You are free to add more arguments to the functions. Be sure to add them
-    *after* the `client` and dataframe arguments.
-  - [ ] When adding new arguments, if you run the `test/test.py` script, be sure
-    to include values for these arguments in the `client.task.create()` calls
-    that are available there.
-- [ ] If you are using Python packages that are not in the standard library, add
-  them to the `requirements.txt` and `setup.py` file.
-- [ ] Fill in the documentation template. This will help others to understand your
-  algorithm, be able to use it safely, and to contribute to it.
-- [ ] If you want to submit your algorithm to a vantage6 algorithm store, be sure
-  to fill in everything in ``algorithm_store.json`` (and be sure to update
-  it if you change function names, arguments, etc.).
-- [ ] Finally, remove this checklist section to keep the README clean.
-
-### Dockerizing your algorithm
-
-To finally run your algorithm on the vantage6 infrastructure, you need to
-create a Docker image of your algorithm.
-
-A Docker image can be created by executing the following command in the root of your
-algorithm directory:
-
-```bash
-docker build -t [my_docker_image_name] .
-```
-
-where you should provide a sensible value for the Docker image name. The
-`docker build` command will create a Docker image that contains your algorithm.
-You can create an additional tag for it by running
-
-```bash
-docker tag [my_docker_image_name] [another_image_name]
-```
-
-This way, you can e.g. do
-`docker tag local_average_algorithm harbor2.vantage6.ai/algorithms/average` to
-make the algorithm available on a remote Docker registry (in this case
-`harbor2.vantage6.ai`).
-
-Finally, you need to push the image to the Docker registry. This can be done
-by running
-
-```bash
-docker push [my_docker_image_name]
-```
-
-Note that you need to be logged in to the Docker registry before you can push
-the image. You can do this by running `docker login` and providing your
-credentials. Check [this page](https://docs.docker.com/get-started/04_sharing_app/)
-For more details on sharing images on Docker Hub. If you are using a different
-Docker registry, check the documentation of that registry and be sure that you
-have sufficient permissions.
+If we want to integrate flower into vantage6 with the legacy v6 communication we would need to fake some of the communication between the client and supernode.
+Moreover, we would need to go over all flower messages and determine if we can fake them this way. These messages are very
+likely to change between versions so this approach is very brittle.
